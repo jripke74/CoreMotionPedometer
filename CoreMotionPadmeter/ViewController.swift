@@ -24,22 +24,33 @@ class ViewController: UIViewController {
     var timer = Timer()
     var distance = 0.0
     var pace = 0.0
+    var elapseSeconds = 0.0
+    let interval = 0.1
     
     @IBOutlet weak var statusLabel: UILabel!
     @IBOutlet weak var stepsLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
+    @IBOutlet weak var startStopPedometer: UIButton!
     @IBOutlet weak var paceLabel: UILabel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        startStopPedometer.backgroundColor = goGreen
         stepsLabel.text = "Steps: Not Available"
     }
     
+    func minutesSeconds(_ seconds: Double) -> String {
+        let minutePart = Int(seconds) / 60
+        let secondsPart = Int(seconds) % 60
+        return String(format: "%02i:%02i", minutePart, secondsPart)
+    }
+    
     func startTimer() {
-        print("JEFF: Started Timer")
+        print("JEFF: Started Timer \(Data())")
         if !timer.isValid {
-            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { (timer) in
+            timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true, block: { (timer) in
                 self.displayPedometerData()
+                self.elapseSeconds += self.interval
             })
         }
     }
@@ -49,7 +60,16 @@ class ViewController: UIViewController {
         displayPedometerData()
     }
     
+    func calulatedPace() -> Double {
+        if distance > 0 {
+            return elapseSeconds / distance
+        } else {
+            return 0
+        }
+    }
+    
     func displayPedometerData() {
+        statusLabel.text = "Pedometer On: " + minutesSeconds(elapseSeconds)
         if let numberOfSteps = numberOfSteps {
             stepsLabel.text = String(format: "Steps: %i", numberOfSteps)
             print("JEFF: \(Date())) -- \(stepsLabel.text!)")
@@ -59,17 +79,20 @@ class ViewController: UIViewController {
             distanceLabel.text = String(format: "Distance: %6.2f", distance)
             print("JEFF: \(distanceLabel.text!)")
         }
+        let minutesPerMile = 1609.34
         if CMPedometer.isPaceAvailable() {
             if pedometerData.averageActivePace != nil {
                 pace = pedometerData.averageActivePace as! Double
-                paceLabel.text = String(format: "Pace %6.2f", pace)
+                paceLabel.text = String(format: "Pace %6.2f", minutesSeconds(pace * minutesPerMile))
             } else {
                 paceLabel.text = "Pace: N/A"
             }
             print("JEFF: \(paceLabel.text!)")
         } else {
-            paceLabel.text = "Pace: Not Supported"
-            print("JEFF: Not Supported device for pace")
+            //paceLabel.text = "Pace: Not Supported"
+            //print("JEFF: Not Supported device for pace")
+            paceLabel.text = "Avg. Pace: " + minutesSeconds(calulatedPace() * minutesPerMile)
+            print("JEFF: \(paceLabel.text!)")
         }
     }
     
@@ -89,7 +112,7 @@ class ViewController: UIViewController {
                     }
             })
             } else {
-                print("Step counting is not available")
+                print("JEFF: Step counting is not available")
             }
         } else {
             pedometer.stopUpdates()

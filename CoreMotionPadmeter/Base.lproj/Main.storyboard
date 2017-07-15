@@ -114,6 +114,7 @@
                     <connections>
                         <outlet property="distanceLabel" destination="pLW-tH-2ia" id="8ej-h8-lOJ"/>
                         <outlet property="paceLabel" destination="eG5-Vy-GN3" id="xeS-gp-x5Z"/>
+                        <outlet property="startStopPedometer" destination="qJu-tu-qKD" id="MfZ-dQ-cAj"/>
                         <outlet property="statusLabel" destination="enr-ei-ck3" id="Hm0-qp-fXL"/>
                         <outlet property="stepsLabel" destination="iqP-lF-CfQ" id="tkz-sg-ZQ5"/>
                     </connections>
