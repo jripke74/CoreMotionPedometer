@@ -26,6 +26,8 @@ class ViewController: UIViewController {
     var pace = 0.0
     var elapseSeconds = 0.0
     let interval = 0.1
+    let motionActivityManager = CMMotionActivityManager()
+    var motionActivity = CMMotionActivity()
     
     @IBOutlet weak var statusLabel: UILabel!
     @IBOutlet weak var stepsLabel: UILabel!
@@ -43,6 +45,37 @@ class ViewController: UIViewController {
         let minutePart = Int(seconds) / 60
         let secondsPart = Int(seconds) % 60
         return String(format: "%02i:%02i", minutePart, secondsPart)
+    }
+    
+    func startMotionActivityManager() {
+        if CMMotionActivityManager.isActivityAvailable() {
+            motionActivityManager.startActivityUpdates(to: OperationQueue.main, withHandler: { (motionActivity) in
+                if let motionActivity = motionActivity {
+                    self.motionActivity = motionActivity
+                }
+            })
+        } else {
+            print("JEFF: Motion activity not available")
+        }
+    }
+    
+    func activity() -> String {
+        var activityString = "unkown"
+        switch motionActivity.confidence {
+        case .low:
+            activityString = "Low"
+        case .medium:
+            activityString = "Meduim"
+        case .high:
+            activityString = "High"
+        }
+        if motionActivity.stationary { activityString += ":Stationary" }
+        if motionActivity.walking { activityString += ":Walking" }
+        if motionActivity.running { activityString += ":Running" }
+        if motionActivity.automotive { activityString += ":Car" }
+        if motionActivity.cycling { activityString += ":Bike" }
+        if motionActivity.unknown { activityString += ":Unkown" }
+        return activityString
     }
     
     func startTimer() {
@@ -69,7 +102,7 @@ class ViewController: UIViewController {
     }
     
     func displayPedometerData() {
-        statusLabel.text = "Pedometer On: " + minutesSeconds(elapseSeconds)
+        statusLabel.text = activity() +  "--" + minutesSeconds(elapseSeconds)
         if let numberOfSteps = numberOfSteps {
             stepsLabel.text = String(format: "Steps: %i", numberOfSteps)
             print("JEFF: \(Date())) -- \(stepsLabel.text!)")
@@ -103,6 +136,7 @@ class ViewController: UIViewController {
             sender.backgroundColor = stopRed
             if CMPedometer.isStepCountingAvailable() {
                 startTimer()
+                startMotionActivityManager()
                 pedometer.startUpdates(from: Date(), withHandler: { (pedometerData, error) in
                     if let pedometerData = pedometerData {
                         self.pedometerData = pedometerData
@@ -116,6 +150,7 @@ class ViewController: UIViewController {
             }
         } else {
             pedometer.stopUpdates()
+            motionActivityManager.stopActivityUpdates()
             stopTimer()
             statusLabel.text = "Pedometer Off"
             sender.backgroundColor = goGreen
