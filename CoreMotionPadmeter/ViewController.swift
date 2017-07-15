@@ -78,6 +78,25 @@ class ViewController: UIViewController {
         return activityString
     }
     
+    func activity(motionActivity: CMMotionActivity) -> String {
+        var activityString = "unkown"
+        switch motionActivity.confidence {
+        case .low:
+            activityString = "Low"
+        case .medium:
+            activityString = "Meduim"
+        case .high:
+            activityString = "High"
+        }
+        if motionActivity.stationary { activityString += ":Stationary" }
+        if motionActivity.walking { activityString += ":Walking" }
+        if motionActivity.running { activityString += ":Running" }
+        if motionActivity.automotive { activityString += ":Car" }
+        if motionActivity.cycling { activityString += ":Bike" }
+        if motionActivity.unknown { activityString += ":Unkown" }
+        return activityString
+    }
+    
     func startTimer() {
         print("JEFF: Started Timer \(Data())")
         if !timer.isValid {
@@ -98,6 +117,22 @@ class ViewController: UIViewController {
             return elapseSeconds / distance
         } else {
             return 0
+        }
+    }
+    
+    func readActivityData() {
+        let now = Date()
+        let yesterday = Date(timeIntervalSince1970: (-3600 * 24))
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .short
+        dateFormatter.timeStyle = .long
+        motionActivityManager.queryActivityStarting(from: yesterday, to: now, to: OperationQueue.main) { (motionActivities, error) in
+            if let motionActivities = motionActivities {
+                for motionActivity in motionActivities {
+                    let activityString = dateFormatter.string(from: motionActivity.startDate) + "  " + self.activity(motionActivity: motionActivity)
+                    print(activityString)
+                }
+            }
         }
     }
     
@@ -155,6 +190,7 @@ class ViewController: UIViewController {
             statusLabel.text = "Pedometer Off"
             sender.backgroundColor = goGreen
             sender.setTitle("Start", for: .normal)
+            readActivityData()
         }
     }
 }
